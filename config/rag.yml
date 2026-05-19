@@ -1,0 +1,2 @@
+chat_model_name: qwen2.5-7b-instruct
+embedding_model_name: text-embedding-bge-small-en-v1.5

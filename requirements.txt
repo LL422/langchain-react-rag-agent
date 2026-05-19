@@ -1,0 +1,27 @@
+# ==============================================
+# LangChain ReAct Agent · Smart Customer Support
+# Install: pip install -r requirements.txt
+# ==============================================
+
+# LangChain Core
+langchain
+langchain-core
+langchain-community
+
+# OpenAI-compatible client (for LM Studio / Ollama / vLLM)
+langchain-openai
+
+# Vector Database
+langchain-chroma
+chromadb
+langchain-text-splitters
+
+# Agent Orchestration
+langgraph
+
+# Frontend
+streamlit
+
+# Document Processing
+pypdf
+pyyaml
