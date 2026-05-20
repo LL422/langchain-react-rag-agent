@@ -146,7 +146,11 @@ def run_task(choice: str, param_value: str) -> str | None:
 def save_report(content: str, prefix: str, target: str) -> str:
     os.makedirs(REPORTS_DIR, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_target = target.replace("..", "_").replace("/", "_").replace("\\", "_").strip("._")
+    safe_target = target.replace("..", "_").replace("/", "_").replace("\\", "_")
+    # Remove Windows-invalid filename characters
+    for char in '<>:"|?*':
+        safe_target = safe_target.replace(char, "")
+    safe_target = safe_target.strip("._ ")
     filename = f"{prefix}_{safe_target}_{timestamp}.md"
     filepath = os.path.join(REPORTS_DIR, filename)
     with open(filepath, "w", encoding="utf-8") as f:

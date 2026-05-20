@@ -37,8 +37,8 @@ def search_codebase(query: str, file_pattern: str = "*") -> str:
         cmd = ["rg", "--line-number", "--context=2", "--no-heading", query]
         if file_pattern and file_pattern != "*":
             cmd.extend(["--glob", file_pattern])
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=root, timeout=15)
-        output = result.stdout.strip()
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=root, timeout=15)
+        output = (result.stdout or "").strip()
         if not output:
             return f"No matches found for '{query}'"
         lines = output.split("\n")
@@ -145,9 +145,10 @@ def git_history(n_commits: int = 10) -> str:
     try:
         result = subprocess.run(
             ["git", "log", "--oneline", f"-n{n_commits}"],
-            capture_output=True, text=True, cwd=_PROJECT_ROOT, timeout=10
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            cwd=_PROJECT_ROOT, timeout=10
         )
-        output = result.stdout.strip()
+        output = (result.stdout or "").strip()
         if not output:
             return "No commits found in this repository."
         return f"Recent {n_commits} commits:\n{output}"
@@ -165,12 +166,12 @@ def git_diff(target: str = "") -> str:
         if target:
             stat_cmd.append(target)
             diff_cmd.append(target)
-        stat_result = subprocess.run(stat_cmd, capture_output=True, text=True, cwd=_PROJECT_ROOT, timeout=15)
-        stat_output = stat_result.stdout.strip()
+        stat_result = subprocess.run(stat_cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=_PROJECT_ROOT, timeout=15)
+        stat_output = (stat_result.stdout or "").strip()
         if not stat_output:
             return "No changes detected."
-        diff_result = subprocess.run(diff_cmd, capture_output=True, text=True, cwd=_PROJECT_ROOT, timeout=30)
-        diff_output = diff_result.stdout.strip()
+        diff_result = subprocess.run(diff_cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=_PROJECT_ROOT, timeout=30)
+        diff_output = (diff_result.stdout or "").strip()
         max_lines = 150
         diff_lines = diff_output.split("\n")
         if len(diff_lines) > max_lines:
