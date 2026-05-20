@@ -1,0 +1,88 @@
+Python Best Practices & Patterns
+
+PEP 8 Style Guide Summary:
+- Use 4 spaces per indentation level. Never mix tabs and spaces.
+- Limit all lines to a maximum of 79 characters for code, 72 for docstrings and comments.
+- Imports should be on separate lines and grouped in the following order: standard library imports, related third-party imports, local application/library specific imports. Use absolute imports.
+- Module level "dunder" names (__all__, __author__, __version__) should be placed after the module docstring but before any import statements.
+- Use double quotes for docstrings, single quotes for regular strings unless the string contains single quotes.
+- Whitespace in expressions and statements: avoid extraneous whitespace in parentheses, brackets, or braces. Use a single space around operators and after commas.
+- Naming conventions: Classes should use CapWords convention (PascalCase). Functions, methods, and variables should use snake_case. Constants should be UPPER_CASE_WITH_UNDERSCORES. Private methods and attributes should use a leading underscore.
+- Comments should be complete sentences in English. Use inline comments sparingly. Block comments should be indented to the same level as the code they describe.
+- Documentation: Write docstrings for all public modules, functions, classes, and methods using triple double quotes.
+
+Type Hints Best Practices:
+- Use the typing module for complex type annotations. Import types like List, Dict, Optional, Union, Callable, Any from typing.
+- In Python 3.10+, use the built-in types directly: list[str], dict[str, int], str | None instead of typing.List[str], typing.Dict, typing.Optional.
+- Always annotate function parameters and return types in public APIs: def process(items: list[str], limit: int = 10) -> dict[str, int].
+- Use Optional[X] or X | None for parameters that accept None.
+- Use Protocol classes from typing for structural subtyping (duck typing with static checking).
+- Use TypeVar for generic functions, TypeGuard for type narrowing.
+- Avoid Any when possible. Use object or more specific protocols instead.
+- Use @overload decorator for functions with multiple distinct signatures.
+- Use TypedDict for dictionaries with a fixed set of keys, dataclasses or NamedTuple for structured data.
+- Use Final for constants that should not be reassigned, Literal for values restricted to specific string/int options.
+
+Exception Handling:
+- Catch specific exceptions, never use bare except: or except Exception: without a good reason.
+- Use try/except/else/finally blocks appropriately: else runs when no exception occurs, finally always runs.
+- Never suppress exceptions silently. At minimum, log the error.
+- Use raise from e to chain exceptions when re-raising with a different type.
+- Define custom exception classes by inheriting from Exception (not BaseException).
+- Use contextlib.suppress() to ignore specific exceptions in a block.
+- For resource cleanup, prefer context managers (with statement) over try/finally.
+- Log exceptions with logger.exception() to include the full traceback automatically.
+- In production code, emit structured error information (error code, user message, correlation ID).
+
+Context Managers:
+- Implement __enter__ and __exit__ methods for custom context managers.
+- Use @contextmanager from contextlib for simple generator-based context managers.
+- Use contextlib.ExitStack for dynamically managing multiple context managers.
+- Context managers ensure cleanup even when exceptions occur.
+- Common use cases: file handling (open), locks (threading.Lock), database transactions, temporary directories.
+- The __exit__ method receives exception type, value, and traceback. Return True to suppress the exception.
+- Use contextlib.closing() for objects with a close() method but no context manager protocol.
+
+Decorators:
+- Use @functools.wraps to preserve the original function's metadata (__name__, __doc__, etc.) when writing decorators.
+- Decorators can accept arguments by wrapping in an additional function layer.
+- Common built-in decorators: @staticmethod, @classmethod, @property, @abstractmethod, @dataclass.
+- Use @cached_property for computed properties that should only be calculated once.
+- Use @lru_cache or @cache from functools for memoization of pure functions.
+- Class decorators modify or enhance classes at definition time.
+- Decorator order matters: @decorator_a @decorator_b def func() applies decorator_a(decorator_b(func)).
+
+Async/Await Patterns:
+- Use async def for coroutine functions, await to call them.
+- Use asyncio.gather() to run multiple coroutines concurrently.
+- Use asyncio.create_task() to schedule coroutines without awaiting immediately.
+- Use asyncio.wait_for() with timeout to prevent hanging.
+- Use async with for async context managers, async for for async iterators.
+- Avoid blocking calls inside async functions. Use run_in_executor() for CPU-bound or blocking I/O.
+- FastAPI and aiohttp use async natively. Django supports async views since 3.1.
+- asyncio.Semaphore limits concurrent operations (e.g., concurrent API calls).
+- asyncio.Queue enables producer-consumer patterns between async workers.
+
+Common Design Patterns in Python:
+- Singleton: Use module-level variables (modules are singletons in Python). Avoid the __new__ hack unless truly needed.
+- Factory: Use a function or class method that returns instances. Abstract Factory with ABC for families of related objects.
+- Strategy: Define a family of algorithms, make them interchangeable. Use functions as first-class objects instead of strategy classes.
+- Observer: Use signals or event emitters. asyncio events, blinker, or custom callback lists.
+- Decorator Pattern: Python's built-in decorator syntax makes this trivial. Use for adding behavior dynamically.
+- Chain of Responsibility: Pass request through a chain of handlers. Middleware stacks use this pattern heavily.
+- Command: Encapsulate a request as an object. Use callables or functools.partial for parameterized commands.
+- Adapter: Wrap an incompatible interface. Use class adapters (inheritance) or object adapters (composition).
+- Facade: Provide a simplified interface to a complex subsystem. Common in library design.
+- Template Method: Define skeleton of algorithm in base class, let subclasses override specific steps. Use ABC with @abstractmethod.
+
+Performance Optimization:
+- Profile before optimizing. Use cProfile, py-spy, or line_profiler to find bottlenecks.
+- For CPU-bound work: use multiprocessing or concurrent.futures.ProcessPoolExecutor.
+- For I/O-bound work: use threading, asyncio, or concurrent.futures.ThreadPoolExecutor.
+- Avoid creating large temporary lists. Use generators, iterators, and streaming where possible.
+- Use __slots__ on classes with many instances to reduce memory overhead.
+- Use collections.deque for efficient queue operations (O(1) append/pop from both ends).
+- Use defaultdict or Counter from collections instead of manual dictionary counting.
+- Use set for membership testing (O(1) vs O(n) for lists).
+- String concatenation in a loop: use ''.join() instead of += to avoid quadratic behavior.
+- Use itertools for efficient iteration (chain, islice, groupby, product, combinations).

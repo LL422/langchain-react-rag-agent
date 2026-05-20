@@ -1,0 +1,85 @@
+Git Reference Guide
+
+Essential Git Commands:
+- git init: Initialize a new Git repository in the current directory.
+- git clone <url>: Clone a remote repository to your local machine.
+- git status: Show the working tree status — which files are modified, staged, or untracked.
+- git add <file>: Stage changes for the next commit. Use git add . to stage all changes.
+- git commit -m "message": Record staged changes with a descriptive message.
+- git push origin <branch>: Push local commits to the remote repository.
+- git pull: Fetch and merge changes from the remote repository into the current branch.
+- git fetch: Download objects and refs from remote without merging.
+- git merge <branch>: Merge another branch into the current branch.
+- git branch: List local branches. Use -a to see all branches including remote ones.
+- git checkout -b <branch>: Create and switch to a new branch.
+- git switch <branch>: Switch to an existing branch (modern alternative to git checkout).
+- git log --oneline: Show commit history in compact one-line format.
+- git log --graph --oneline --all: Visualize branch topology in compact form.
+- git diff: Show unstaged changes. git diff --staged shows staged changes.
+- git diff <commit1> <commit2>: Show differences between two commits.
+- git stash: Temporarily save uncommitted changes. git stash pop to restore.
+- git reset --soft HEAD~1: Undo the last commit but keep changes staged.
+- git reset --hard HEAD~1: Undo the last commit and discard all changes (destructive).
+- git revert <commit>: Create a new commit that reverses a previous commit (safe undo).
+- git rebase <branch>: Reapply commits on top of another base branch.
+- git cherry-pick <commit>: Apply a specific commit from another branch.
+- git tag <name>: Create a lightweight tag. Use -a for annotated tags.
+- git blame <file>: Show who last modified each line of a file.
+
+Branching Strategies:
+- Git Flow: Uses main, develop, feature/*, release/*, and hotfix/* branches. Best for projects with scheduled releases. Feature branches merge into develop. Releases branch from develop and merge into main.
+- GitHub Flow: Simplistic — main branch is always deployable. Feature branches are created from main and merged via pull requests. Ideal for continuous deployment.
+- GitLab Flow: Combines environment branches (staging, production) with feature branches. Merges flow upstream from feature to main to staging to production.
+- Trunk-Based Development: Developers commit directly to main (trunk) or use very short-lived feature branches. Requires feature flags for work-in-progress code. Enables fast CI/CD.
+
+Commit Message Conventions:
+- Conventional Commits format: type(scope): description. Types include: feat (new feature), fix (bug fix), docs (documentation), style (formatting), refactor (code restructuring), test (adding tests), chore (maintenance), perf (performance improvement), ci (CI/CD changes), build (build system changes).
+- Write commit messages in imperative mood: "add feature" not "adds feature" or "added feature".
+- Keep the first line under 50 characters. Use the body for detailed explanation, wrapped at 72 characters.
+- Reference issue numbers: "fix: resolve authentication timeout (#42)".
+- Breaking changes: add "BREAKING CHANGE:" footer or "!" after type: "feat!: remove deprecated API endpoint".
+- Good commit messages explain WHY, not just WHAT.
+
+Merge vs Rebase:
+- Merge: Creates a merge commit that preserves the full history. Safe for shared branches. Non-destructive. Use for integrating completed features into main branches.
+- Rebase: Rewrites commit history to create a linear sequence. Cleaner history. Never rebase commits that have been pushed to shared branches. Use for cleaning up local feature branches before sharing.
+- Squash merge: Combines all commits from a branch into a single commit on the target branch. Clean history but loses granularity. Good for small features with many WIP commits.
+
+Resolving Merge Conflicts:
+- git status shows files with conflicts. Conflicted files contain markers: <<<<<<<, =======, >>>>>>>.
+- Edit the file to resolve conflicts, remove the markers, then git add the resolved file.
+- Use git mergetool for visual conflict resolution with tools like VS Code, Meld, or Beyond Compare.
+- After resolving all conflicts: git commit (Git automatically creates a merge commit).
+- To abort a merge: git merge --abort.
+- To prevent conflicts: pull frequently, communicate about file ownership, keep commits small and focused.
+
+Git Internals:
+- Git stores data as snapshots (not diffs). Each commit points to a tree object that represents the entire project state.
+- Objects: blob (file content), tree (directory listing), commit (snapshot with metadata), tag (named reference).
+- All objects are content-addressable by SHA-1 hash, stored in .git/objects/.
+- Branches are lightweight movable pointers to commits (refs/heads/).
+- HEAD points to the current branch or commit (detached HEAD state).
+- The staging area (index) is a binary file at .git/index that tracks what will go into the next commit.
+- git gc performs garbage collection, compressing objects into pack files for efficiency.
+
+Undoing Changes:
+- Undo unstaged changes in a file: git restore <file> or git checkout -- <file>.
+- Unstage a file: git restore --staged <file> or git reset HEAD <file>.
+- Undo last commit (keep changes): git reset --soft HEAD~1.
+- Undo last commit (discard changes): git reset --hard HEAD~1.
+- Recover deleted commits: git reflog shows the reference log. Use git checkout <hash> to recover.
+- Amend last commit: git commit --amend (only for commits not yet pushed).
+
+Working with Remotes:
+- origin is the default name for the primary remote repository.
+- git remote -v: List configured remotes with URLs.
+- git remote add <name> <url>: Add a new remote.
+- git remote remove <name>: Remove a remote.
+- git fetch --prune: Remove local references to deleted remote branches.
+- Force push (use with extreme caution): git push --force-with-lease origin <branch>. Prefer --force-with-lease over --force as it checks for upstream changes.
+
+Git Hooks:
+- Client-side hooks: pre-commit (run linters/tests before commit), commit-msg (validate commit message format), pre-push (run tests before push).
+- Server-side hooks: pre-receive (validate incoming pushes), post-receive (trigger CI/CD on push).
+- Hooks are scripts in .git/hooks/. Use a framework like pre-commit or husky for managed hooks.
+- pre-commit framework allows defining hooks in .pre-commit-config.yaml with a clean, reproducible setup.

@@ -21,8 +21,12 @@ def monitor_tool(
         result = handler(request)
         logger.info(f"[tool monitor] Tool {request.tool_call['name']} succeeded")
 
-        if request.tool_call['name'] == "fill_context_for_report":
-            request.runtime.context["report"] = True
+        if request.tool_call['name'] == "doc_search":
+            query = request.tool_call['args'].get("query", "")
+            review_keywords = ["review", "security", "performance", "code review",
+                             "readability", "best practice", "anti-pattern", "vulnerability"]
+            if any(kw in query.lower() for kw in review_keywords):
+                request.runtime.context["review"] = True
 
         return result
     except Exception as e:
@@ -36,13 +40,15 @@ def log_before_model(
         runtime: Runtime,
 ):
     logger.info(f"[log_before_model] About to invoke model with {len(state['messages'])} messages")
-    logger.debug(f"[log_before_model] {type(state['messages'][-1]).__name__} | {state['messages'][-1].content.strip()}")
+    last_msg = state['messages'][-1]
+    content = last_msg.content if hasattr(last_msg, 'content') else str(last_msg)
+    logger.debug(f"[log_before_model] {type(last_msg).__name__} | {str(content)[:200]}")
     return None
 
 
 @dynamic_prompt
-def report_prompt_switch(request: ModelRequest):
-    is_report = request.runtime.context.get("report", False)
-    if is_report:
+def review_prompt_switch(request: ModelRequest):
+    is_review = request.runtime.context.get("review", False)
+    if is_review:
         return load_report_prompts()
     return load_system_prompts()

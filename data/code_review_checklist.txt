@@ -1,0 +1,55 @@
+Code Review Checklist
+
+Security Vulnerabilities to Check:
+- SQL Injection: Never concatenate user input into SQL queries. Always use parameterized queries or ORM methods that escape inputs. Check for f-strings or string formatting in database queries.
+- Command Injection: Never pass user input directly to os.system(), subprocess.call(shell=True), or similar. Use subprocess.run() with shell=False and pass arguments as a list.
+- Path Traversal: Validate file paths are within allowed directories. Resolve paths with os.path.realpath() and verify they start with the allowed base path. Reject paths containing ".." sequences.
+- Cross-Site Scripting (XSS): In web applications, never render user-generated content without escaping HTML entities. Use template engines with auto-escaping (Jinja2, React JSX).
+- Hardcoded Secrets: Check for API keys, passwords, tokens, or certificates embedded in source code. These should be loaded from environment variables or a secrets manager at runtime.
+- Insecure Deserialization: Never use pickle.load() on untrusted data. Use JSON for data interchange, or signed serialization (itsdangerous) if pickle is required.
+- Authentication and Authorization: Verify that protected endpoints actually check authentication. Check that authorization checks happen for every request, not just on page load.
+- Insecure Direct Object References (IDOR): Check that users can only access resources they own (e.g., can't access /user/1234/profile by changing an ID).
+- Sensitive Data Exposure: Check that passwords, tokens, and personal data are not logged, stored in plaintext, or exposed in error messages.
+
+Performance Anti-Patterns:
+- N+1 Query Problem: Looping over results and making a database query for each one. Fix with eager loading (select_related, prefetch_related in Django, joinedload in SQLAlchemy).
+- Unbounded Memory Usage: Loading entire datasets into memory when streaming or pagination would work. Use generators, limit() in queries, or paginate API results.
+- Blocking I/O in Event Loops: Calling time.sleep(), requests.get(), or file.read() inside async functions. Use asyncio.sleep(), aiohttp, or run_in_executor().
+- Inefficient String Operations: Concatenating strings in a loop with += builds a new string each iteration (O(n^2)). Use ''.join() instead.
+- Missing Indexes on Database Columns: Check that columns used in WHERE, JOIN, and ORDER BY clauses have appropriate indexes.
+- Repeated Expensive Computations: Recalculating the same value in a loop. Cache the result outside the loop, or use @lru_cache for pure functions.
+- Excessive Logging in Production: Logging at DEBUG level inside hot loops generates massive log files. Use appropriate log levels and guard expensive log formatting with logger.isEnabledFor().
+- Unoptimized API Calls: Making N sequential API calls when they could be parallelized with asyncio.gather() or ThreadPoolExecutor.
+
+Code Readability and Maintainability:
+- Single Responsibility Principle: Each function, class, or module should have exactly one reason to change. Functions longer than 30-50 lines often do too much.
+- Meaningful Names: Variable and function names should clearly express intent. Avoid abbreviations unless universally understood (e.g., "i" for loop index, "ctx" for context). Names should answer "why does this exist?" not "what does it do?"
+- Avoid Magic Numbers: Replace hardcoded numeric values with named constants. BUFFER_SIZE = 4096 is clearer than a bare 4096 in code.
+- Deep Nesting: More than 3 levels of indentation is hard to follow. Use early returns, guard clauses, or extract nested blocks into helper functions.
+- Comments vs Self-Documenting Code: Comments should explain WHY, not WHAT. Well-named functions and variables make "what" comments unnecessary. Delete commented-out code — git history preserves it.
+- Consistent Error Handling: Don't mix error handling strategies in the same module. Choose: return error codes/tuples, raise exceptions, or use Result monads. Be consistent.
+- Function Parameter Count: Functions with more than 4-5 parameters are hard to call correctly. Use dataclasses, TypedDict, or configuration objects for complex parameter sets.
+- Global State: Module-level mutable state makes testing difficult and code unpredictable. Prefer dependency injection — pass dependencies as constructor arguments rather than importing them as module globals.
+
+Testing Best Practices:
+- Unit tests should be fast (milliseconds, no I/O), deterministic (same result every run), and isolated (one test failure shouldn't cascade).
+- Use pytest fixtures for shared setup. Prefer function-scoped fixtures over session-scoped ones to maintain test isolation.
+- Mock external dependencies at the interface boundary, not deep internals. Mock the HTTP client, not the 10th function in a call chain.
+- Test behavior, not implementation. A test should verify: given input X, the system returns output Y. It should not verify that the system called helper function Z with argument W.
+- Use parametrize to test multiple input/output pairs with a single test function.
+- Integration tests verify that real components work together. Run them against a real database (test database, not production).
+- Aim for the testing trophy: mostly integration tests, fewer unit tests, some end-to-end tests. Avoid the "ice cream cone" where you have many E2E tests and few unit tests.
+
+Dependency Management:
+- Pin your dependencies to specific versions in requirements.txt or pyproject.toml. Unpinned dependencies cause "works on my machine" problems.
+- Use pip freeze > requirements.txt only for applications (not libraries). For libraries, specify minimum versions with compatible release operators (~= or >=).
+- Regularly update dependencies and run tests. Use tools like dependabot or renovate for automated update PRs.
+- Check dependency licenses for compliance. Some licenses (GPL, AGPL) impose restrictions on commercial use.
+- Minimize dependency count. Each new dependency is a maintenance burden and potential security vulnerability. Prefer standard library when possible.
+
+Error Message Quality:
+- Error messages should tell the user: what went wrong, why it went wrong, and what they can do about it.
+- Include relevant context: the operation being performed, the input causing the error, and the specific constraint violated.
+- Never expose internal implementation details, stack traces, or database schema in user-facing error messages.
+- Log the full error with traceback server-side using logger.exception() for debugging.
+- Use specific exception types (ValueError, PermissionError, etc.) rather than generic Exception.

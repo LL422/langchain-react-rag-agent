@@ -1,16 +1,16 @@
 <div align="center">
 
-# LangChain ReAct Agent · Smart Customer Support
+# DevBot · Developer Assistant
 
-**An intelligent customer support system powered by LangChain + ReAct paradigm + RAG retrieval-augmented generation, featuring a robotic vacuum cleaner use case**
+**A developer productivity agent powered by LangChain ReAct Agent + RAG, running on local LLMs via LM Studio**
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
 &nbsp;
-[![LangChain](https://img.shields.io/badge/LangChain-0.3-green)](https://www.langchain.com/)
+[![LangChain](https://img.shields.io/badge/LangChain-1.x-green)](https://www.langchain.com/)
 &nbsp;
-[![LangGraph](https://img.shields.io/badge/LangGraph-0.2-orange)](https://github.com/langchain-ai/langgraph)
+[![LangGraph](https://img.shields.io/badge/LangGraph-1.x-orange)](https://github.com/langchain-ai/langgraph)
 &nbsp;
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.40-red)](https://streamlit.io/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.x-red)](https://streamlit.io/)
 &nbsp;
 [![License](https://img.shields.io/badge/License-MIT-yellow)](./LICENSE)
 
@@ -20,33 +20,22 @@
 
 ## Overview
 
-A **ReAct (Reasoning + Acting) Agent** built with the LangChain framework, integrating RAG retrieval-augmented generation, multi-tool calling, and dynamic prompt switching. The system autonomously determines user intent (knowledge QA vs. report generation), invokes the appropriate tools and knowledge bases for reasoning, and visualizes the Agent's thought process in real time via a Streamlit streaming interface.
+**DevBot** is a ReAct (Reasoning + Acting) Agent that acts as an AI pair programmer. It can search your codebase, read files, analyze git history, and retrieve technical documentation — all through natural language conversation. Built on LangChain + LangGraph, with a RAG-powered knowledge base and dynamic prompt switching between general assistance and code review modes.
 
-## Demo
+## Features
 
-<div align="center">
-
-<img src="assets/chat1.png" alt="Chat Interface" width="85%">
-
-*Figure 1. Q&A — RAG-powered knowledge base retrieval*
-
-&nbsp;
-
-<img src="assets/chat2.png" alt="Tool Calling" width="85%">
-
-*Figure 2. Agent Tool Calling — real-time reasoning and tool execution pipeline*
-
-&nbsp;
-
-<img src="assets/chat3.png" alt="Tool Call Details" width="85%">
-
-*Figure 3. Tool Call Details — multi-step reasoning with intermediate results visualization*
-
-</div>
+| Feature | Description |
+|---|---|
+| **Codebase Search** | Full-text search across the project using ripgrep with context display |
+| **File Reading** | Read any file with line-range control, path-scoped to project root |
+| **Git History** | Query recent commits to understand changes and evolution |
+| **Directory Navigation** | List project structure at any level of the tree |
+| **RAG Doc Lookup** | Retrieve Python best practices, Git reference, LangChain guide, and code review checklist |
+| **Dynamic Prompt Switching** | Automatically switches to code review persona when analyzing code quality |
+| **Streaming UI** | Streamlit-powered, real-time reasoning and tool execution visualization |
+| **Local LLM** | Runs entirely offline with LM Studio — no cloud API keys needed |
 
 ## Architecture
-
-<div align="center">
 
 ```
 User Input (Streamlit)
@@ -68,45 +57,42 @@ User Input (Streamlit)
       │                │              │
       ▼                ▼              ▼
 ┌──────────┐   ┌────────────┐  ┌──────────┐
-│   RAG    │   │   Tools    │  │  Prompt  │
-│  Chroma  │   │Weather/User│  │ Dynamic  │
-│  Vector  │   │Data/Report │  │ Switch   │
+│   RAG    │   │ Developer  │  │  Prompt  │
+│  Chroma  │   │   Tools    │  │ Dynamic  │
+│  Vector  │   │            │  │ Switch   │
 │  Store   │   │            │  │ Manager  │
 └──────────┘   └────────────┘  └──────────┘
 ```
 
-</div>
+### Tools
 
-### Core Features
-
-| Feature | Description |
+| Tool | Description |
 |---|---|
-| **ReAct Paradigm** | Thought → Action → Observation loop; the Agent autonomously reasons and decides which tool to invoke |
-| **RAG Retrieval** | Chroma vector store + local Embedding with MD5 file deduplication; supports TXT/PDF loading |
-| **Multi-Tool Calling** | Weather lookup / user location / external data retrieval / report context injection; Agent auto-selects as needed |
-| **Dynamic Prompt Switching** | Middleware auto-switches between "Q&A" and "Report Generation" system prompts based on runtime context |
-| **Streaming UI** | Streamlit-powered, character-by-character streaming output, chat history, visible Agent reasoning |
-| **Modular Architecture** | Agent / RAG / Model / Tools / Middleware as independent modules; YAML-driven configuration |
+| `search_codebase` | grep/ripgrep across project files with context |
+| `read_file` | Read file contents with optional line range |
+| `list_directory` | List directory contents with file sizes |
+| `git_history` | Show recent git commits |
+| `doc_search` | RAG lookup over technical documentation |
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| LLM | Local Qwen (LM Studio / OpenAI-compatible API) |
+| LLM | Local Qwen models via LM Studio (OpenAI-compatible API) |
 | Agent Framework | LangChain + LangGraph |
 | Vector Database | Chroma |
-| Document Processing | PyPDF + RecursiveCharacterTextSplitter |
+| Embedding | BGE / Nomic Embed (local via LM Studio) |
 | Frontend | Streamlit |
-| Configuration | YAML-driven (Agent / RAG / Chroma / Prompts) |
+| Configuration | YAML-driven |
 
 ## Quick Start
 
 ### Requirements
 
 - **Python** >= 3.10
-- **LM Studio** (or any OpenAI-compatible local server) with a chat model and an embedding model loaded
+- **LM Studio** with a chat model and an embedding model loaded
 
-### 1. Clone the Repository
+### 1. Clone
 
 ```bash
 git clone https://github.com/LL422/langchain-react-rag-agent.git
@@ -123,87 +109,86 @@ pip install -r requirements.txt
 
 - Download and install [LM Studio](https://lmstudio.ai/)
 - Load a chat model (e.g., `qwen2.5-7b-instruct`) and an embedding model (e.g., `text-embedding-bge-small-en-v1.5`)
-- Start the Local Server (default port: `1234`)
+- Start the Local Server (default port `1234`)
 - Update model names in `config/rag.yml` if using different models
 
-### 4. Initialize the Knowledge Base (First Run)
+### 4. Initialize the Knowledge Base
 
 ```bash
 python -c "from rag.vector_store import VectorStoreService; VectorStoreService().load_document()"
 ```
 
-### 5. Launch the Application
+### 5. Launch
 
 ```bash
 streamlit run app.py
 ```
 
-Your browser will open automatically at http://localhost:8501
+### Test Queries
 
-### Verification
+Try these after launching:
 
-Try these test queries after launching:
-
-- *What are the main functions of a robotic vacuum cleaner?* (RAG knowledge base QA)
-- *What should I do if the robot won't return to its charging dock?* (Troubleshooting)
-- *Generate a personalized usage report based on my data* (Report generation + tool calling)
+- *What design patterns are used in this project?* — codebase analysis
+- *Search the codebase for all uses of create_agent* — code search
+- *Show me the recent git history* — git log
+- *Review agent/tools/middleware.py for potential issues* — code review mode
+- *What does the LangChain guide say about tool error handling?* — RAG doc lookup
 
 ## Project Structure
 
 ```
-LangChain-ReAct-Agent/
+langchain-react-rag-agent/
 │
 ├── agent/                          # Agent Core
-│   ├── react_agent.py              #   ReAct Agent main logic (streaming execution)
+│   ├── react_agent.py              #   ReAct Agent main logic
 │   └── tools/
-│       ├── agent_tools.py          #   Tool functions (RAG/Weather/User Data/Report)
-│       └── middleware.py           #   Middleware (tool monitoring/dynamic prompt switching)
+│       ├── agent_tools.py          #   5 developer tools
+│       └── middleware.py           #   Tool monitoring + dynamic prompt switching
 │
-├── rag/                            # RAG Retrieval-Augmented Generation
-│   ├── vector_store.py             #   Chroma vector store · document loading · MD5 deduplication
-│   └── rag_service.py              #   RAG retrieval → LLM summarization service
+├── rag/                            # RAG Pipeline
+│   ├── vector_store.py             #   Chroma vector store · MD5 dedup
+│   └── rag_service.py              #   Retrieval → LLM summarization
 │
 ├── model/
-│   └── factory.py                  # Model factory (ChatTongyi + DashScopeEmbedding)
+│   └── factory.py                  # Model factory (ChatOpenAI + custom embeddings)
 │
 ├── config/                         # YAML Configuration
-│   ├── agent.yml                   #   Agent behavior & tool settings
-│   ├── chroma.yml                  #   Vector store & retrieval parameters
-│   ├── prompts.yml                 #   Prompt template paths
-│   └── rag.yml                     #   RAG model & parameters
+│   ├── agent.yml
+│   ├── chroma.yml
+│   ├── prompts.yml
+│   └── rag.yml
 │
 ├── prompts/                        # Prompt Templates
-│   ├── main_prompt.txt             #   Q&A System Prompt
-│   ├── rag_summarize.txt           #   RAG Summarization Prompt
-│   └── report_prompt.txt           #   Report Generation System Prompt
+│   ├── main_prompt.txt             #   Developer assistant system prompt
+│   ├── code_review_prompt.txt      #   Code reviewer persona
+│   └── rag_summarize.txt           #   RAG summarization prompt
+│
+├── data/                           # Knowledge base (programming docs)
+│   ├── python_best_practices.txt
+│   ├── git_reference.txt
+│   ├── langchain_guide.txt
+│   └── code_review_checklist.txt
 │
 ├── utils/                          # Utilities
-│   ├── config_handler.py           #   YAML config loader
-│   ├── file_handler.py             #   File parsing (PDF/TXT)
-│   ├── logger_handler.py           #   Logging
-│   ├── path_tool.py                #   Path utilities
-│   └── prompt_loader.py            #   Prompt loader
+│   ├── config_handler.py
+│   ├── file_handler.py
+│   ├── logger_handler.py
+│   ├── path_tool.py
+│   └── prompt_loader.py
 │
-├── data/                           # Knowledge base documents (robotic vacuum domain)
-│   └── external/                   # External data (usage records)
-├── assets/                         # Demo screenshots
-├── app.py                          # Streamlit application entry point
+├── app.py                          # Streamlit entry point
 ├── requirements.txt
 └── README.md
 ```
 
 ## Configuration
 
-All settings are managed through YAML files in the `config/` directory:
-
 | File | Description |
 |---|---|
-| `rag.yml` | Chat model name, Embedding model name |
-| `chroma.yml` | Chroma persistence path, chunk size, retrieval Top-K, supported file types |
-| `prompts.yml` | Prompt template file paths for each scenario |
-| `agent.yml` | Agent timeout, external data path, etc. |
-
-For first-time setup, make sure LM Studio is running with both models loaded and knowledge base documents are present in the `data/` directory.
+| `rag.yml` | Chat and embedding model names |
+| `chroma.yml` | Chroma persistence, chunk size, Top-K, allowed file types |
+| `prompts.yml` | Paths to prompt templates |
+| `agent.yml` | Agent-level settings |
 
 ## License
 

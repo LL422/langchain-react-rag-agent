@@ -1,0 +1,76 @@
+LangChain Framework Guide
+
+Core Concepts:
+- LangChain is a framework for building applications powered by large language models (LLMs). It provides modular components (models, prompts, chains, agents, tools) that can be composed together.
+- The central idea is to "chain" together different components to create more advanced use cases around LLMs.
+- LangChain Expression Language (LCEL): a declarative way to compose chains using the pipe operator |. Example: prompt | model | output_parser creates a runnable sequence.
+- Runnable interface: all LCEL components implement the Runnable protocol (invoke, stream, batch, etc.), making them composable and interoperable.
+- LangGraph extends LangChain for agent-based and multi-step workflows with explicit state management.
+
+Chat Models:
+- ChatOpenAI: Connects to OpenAI-compatible APIs (including LM Studio, Ollama, vLLM). Parameters: model (model name string), base_url (endpoint URL), api_key (or "not-needed" for local), temperature (0-2, controls randomness).
+- ChatTongyi: Alibaba Cloud DashScope (aliyun). Requires DASHSCOPE_API_KEY environment variable.
+- ChatAnthropic: Claude models via Anthropic API.
+- ChatOllama: Local models via Ollama. Parameters: model, base_url (default http://localhost:11434).
+- Models implement: invoke(messages) for single call, stream(messages) for streaming, and bind_tools(tools) for tool/function calling.
+
+Prompts and Prompt Templates:
+- PromptTemplate: Simple string template with {} placeholders. from_template("Hello {name}") creates a template.
+- ChatPromptTemplate: Template for chat message sequences. Supports system, human, and AI message roles.
+- SystemMessage, HumanMessage, AIMessage: Message primitives for constructing chat inputs.
+- Few-shot prompting: Use FewShotPromptTemplate or ExampleSelector to provide examples in the prompt.
+- Prompt caching (Anthropic): Automatically applies when prompts exceed 1024 tokens, reducing cost for repeated use.
+
+Vector Stores and Embeddings:
+- Chroma: Open-source embedding database. Supports in-memory and persistent storage. Created with collection_name, embedding_function, and persist_directory.
+- Embedding models: OpenAIEmbeddings (OpenAI-compatible), DashScopeEmbeddings (aliyun), OllamaEmbeddings, HuggingFaceEmbeddings. Each implements embed_documents(texts) and embed_query(text).
+- Retriever interface: vectorstore.as_retriever(search_kwargs={"k": 3}) for top-k similarity search.
+- Document loading: TextLoader for .txt, PyPDFLoader for .pdf, CSVLoader for .csv, and many more in langchain_community.document_loaders.
+- Text splitting: RecursiveCharacterTextSplitter splits text recursively by separators (paragraphs, sentences, words). Parameters: chunk_size, chunk_overlap. CharacterTextSplitter for simple character-based splitting.
+
+Tools and Tool Calling:
+- @tool decorator: Converts a Python function into a LangChain tool. Parameters: name_or_callable, description (used by the LLM to decide when to call), return_direct (skip LLM processing of output).
+- Tool signature: @tool(description="...") def my_tool(param: str) -> str. The function name becomes the tool name, parameter names and types are inferred from the function signature.
+- StructuredTool: For tools with complex input schemas. Use Pydantic models for input validation.
+- Tool result: Return a string that will be inserted into the conversation as a ToolMessage. The LLM sees this result and decides the next action.
+- Tool error handling: Tools can raise exceptions. Wrap in try/except in the tool body for graceful error messages.
+
+Agents (create_agent):
+- create_agent(model, system_prompt, tools, middleware): The primary API for creating ReAct agents in LangChain 0.3+.
+- The agent implements the ReAct (Reasoning + Acting) loop: Thought (reason about what to do) → Action (call a tool) → Observation (receive tool result) → repeat until the agent decides to respond.
+- system_prompt: Instructions for the agent, including tool descriptions and behavior rules. Can be a static string or a callable/dynamic function.
+- tools: List of @tool-decorated functions the agent can invoke. The agent autonomously decides which tool to call based on user input and conversation context.
+- middleware: List of middleware hooks that intercept the agent's execution pipeline. Types include: @wrap_tool_call, @before_model, @dynamic_prompt, @after_model.
+- The agent returns a compiled LangGraph graph. Use agent.stream(input, stream_mode="values", context={}) for streaming execution.
+- stream_mode options: "values" (full state after each step), "updates" (state changes per step), "messages" (stream LLM tokens).
+
+Middleware:
+- @wrap_tool_call: Intercepts tool calls before execution. Signature: def middleware(request: ToolCallRequest, handler: Callable). Must call handler(request) to execute the tool. Can modify, log, or block tool calls.
+- @before_model: Called before each LLM invocation. Signature: def middleware(state: AgentState, runtime: Runtime). Return None to continue, or a Command to modify behavior.
+- @dynamic_prompt: Called to dynamically generate the system prompt on each LLM call. Signature: def middleware(request: ModelRequest) -> str. Returns the system prompt string. Can switch prompts based on runtime.context.
+- @after_model: Called after each LLM response. Signature: def middleware(state: AgentState, runtime: Runtime).
+
+State Management with LangGraph:
+- AgentState: TypedDict containing messages list and any custom state fields.
+- Runtime: Carries context and configuration through the execution. runtime.context is a mutable dict for sharing data between middleware.
+- Checkpoints: LangGraph supports persisting agent state. Use SqliteSaver or PostgresSaver for durable agent memory.
+- Human-in-the-loop: Interrupt execution at specific nodes and wait for human approval. Useful for sensitive operations.
+
+RAG (Retrieval-Augmented Generation) Pattern:
+- Two-stage pipeline: (1) Retrieve relevant documents from a vector store using the user query as a search key. (2) Pass the retrieved documents + original query to an LLM for summarization/answering.
+- The retriever returns Document objects, each containing page_content (the text) and metadata (source file, page number, etc.).
+- Build context by formatting retrieved documents into the prompt. Include source attribution for transparency.
+- Guard against hallucination by instructing the LLM to only answer based on retrieved context. If context is insufficient, the LLM should say so rather than fabricate.
+
+Streaming:
+- LLM streaming: model.stream(messages) yields token-by-token chunks.
+- Agent streaming: agent.stream(input, stream_mode="values") yields state snapshots after each step.
+- Streamlit integration: st.write_stream(generator) renders streaming output character by character.
+- For non-blocking UI: wrap streaming in a generator function, yield each chunk, and pass to write_stream.
+
+Error Handling and Resilience:
+- Wrap LLM calls in try/except to catch API errors. Common errors: rate limits (429), authentication (401), server errors (500), timeouts.
+- Implement retry with exponential backoff: tenacity library provides @retry decorator.
+- Circuit breaker pattern: stop calling a failing service and fail fast after N consecutive failures.
+- Fallback chains: use .with_fallbacks([backup_chain]) to switch to an alternative if the primary chain fails.
+- Tool errors: return error messages as tool results so the agent can adapt, rather than crashing.

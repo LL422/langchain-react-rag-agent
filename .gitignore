@@ -47,7 +47,10 @@ md5.txt
 # =========================
 .claude/
 
-# Optional: if you later generate temp reports locally
+# Generated reports
+reports/
+
+# Temp files
 tmp/
 temp/
 *.tmp
